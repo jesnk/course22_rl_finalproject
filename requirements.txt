@@ -1,1 +1,4 @@
 gym==0.17.3
+tensorflow-gpu
+matplotlib
+numpy
