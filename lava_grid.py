@@ -78,6 +78,7 @@ class GridCore(DiscreteEnv):
         self._steps = 0
         self.s = np.random.choice(range(len(self.isd)), p=self.isd)
         self.lastaction = None
+
         if self.xy:
             s = np.unravel_index(self.s, self.shape)
             if self._nps:
