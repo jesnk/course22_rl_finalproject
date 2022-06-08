@@ -8,19 +8,22 @@ Overall required package listed in package_info.txt
 
 * Agent Training & Saving command
 
-| python chain_train.py
+    python chain_train.py
 
-| python lava_train.py
+    python lava_train.py
 
 Trained model will saved in ./saved_models/{chain,lava}
 
 ## Guide to evaluate model
 
-If you try to downloaded model, place 'saved_model' directory on root folder
-We are not modified chain_test.py & lava_test.py. just execute below command.
+If you try to downloaded model, place 'saved_model' directory on root folder.
+
+We are not modified chain_test.py & lava_test.py. 
+
+just execute below command.
 
 * Testing code
 
-| python chain_test.py
+    python chain_test.py
 
-| python lava_test.py
+    python lava_test.py
