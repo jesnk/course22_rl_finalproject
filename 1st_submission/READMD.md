@@ -8,9 +8,9 @@ Overall required package listed in package_info.txt
 
 * Agent Training & Saving command
 
-    python chain_train.py
+    python chain_train.py   
 
-    python lava_train.py
+    python lava_train.py    
 
 Trained model will saved in ./saved_models/{chain,lava}
 
@@ -24,6 +24,6 @@ just execute below command.
 
 * Testing code
 
-    python chain_test.py
+    python chain_test.py    
 
-    python lava_test.py
+    python lava_test.py     
