@@ -1,10 +1,5 @@
-python 3.9 <br/>
+패키지 리스트는 package_info.txt에 넣어놨습니다.
 
-Package dependency는 requirements.txt 참고.
+기본적으로 tensorflow를 기반으로 작동합니다.
 
-
-    pip install gym==0.17.3
-
-chain_test.ipynb, lava_test.ipynb 파일에 최근 결과 저장되어 있음.
-
-chain_test.py, lava_test.py 파일에 동일 코드 작성됨.
+weight는 루트 폴더에서 saved_models폴더에 저장됩니다.

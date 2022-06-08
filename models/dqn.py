@@ -41,6 +41,8 @@ class Qfunction(keras.Model):
         # TODO: Define the output layer.
         self.output_layer = keras.layers.Dense(actsize) 
     
+
+
     @tf.function
     def call(self, states):
         ########################################################################
@@ -58,16 +60,25 @@ class Qfunction(keras.Model):
 
 class DQN(object):
     
-    def __init__(self, obssize, actsize, hidden_dims, optimizer):
+    def __init__(self, obssize, actsize, hidden_dims, optimizer, load_model = None):
         """
         obssize: dimension of state space
         actsize: dimension of action space
         optimizer: 
         """
-        self.qfunction = Qfunction(obssize, actsize, hidden_dims)
+        if load_model is not None :
+            print("trying load "+load_model)
+            self.qfunction = tf.keras.models.load_model(load_model,compile=False)
+        else :
+            self.qfunction = Qfunction(obssize, actsize, hidden_dims)
         self.optimizer = optimizer
         self.obssize = obssize
         self.actsize = actsize
+
+    def save(self,name) :
+        self.qfunction.save(name)
+
+
 
     def _predict_q(self, states, actions):
         """
