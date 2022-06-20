@@ -117,8 +117,8 @@ class agent():
         self.obssize = 60
         self.actsize = 4
         self.lr = 5e-4
-        self.maxlength = 10000
-        self.tau = 1
+        self.maxlength = 100000
+        self.tau = 5
         self.initialize = 500
         self.epsilon = 1
         self.epsilon_decay = .995

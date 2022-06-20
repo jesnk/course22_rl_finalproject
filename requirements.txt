@@ -2,3 +2,6 @@ gym==0.17.3
 tensorflow
 matplotlib
 numpy
+stable-baselines3
+pyyaml
+huggingface-hub

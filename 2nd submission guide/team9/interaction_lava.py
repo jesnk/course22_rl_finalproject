@@ -53,7 +53,7 @@ def calculate_sample_efficiency(episodes, env, agent):
         # e.g., agent.update()
         
         #####################
-        
+        print(epi)
         episodic_returns.append(cum_reward)
                     
     return np.sum(episodic_returns)
