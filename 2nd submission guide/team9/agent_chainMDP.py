@@ -1,113 +1,91 @@
 import sys
 sys.path.append("./team9")
-import tensorflow as tf
-from tensorflow import keras
-from collections import deque
-import numpy as np
-import matplotlib
-import matplotlib.pyplot as plt
-import pickle
+## reference
+## https://github.com/nikhilbarhate99/PPO-PyTorch
 
-
-import tensorflow as tf
-from tensorflow import keras
-
-from collections import deque
-import numpy as np
-import matplotlib
-import matplotlib.pyplot as plt
+import torch
+import torch.nn as nn
+from torch.distributions import MultivariateNormal
+from torch.distributions import Categorical
 import random
-import gym
 
-class Qfunction(keras.Model):   
-    def __init__(self, obssize, actsize, hidden_dims):
-        super(Qfunction, self).__init__()
-        initializer = keras.initializers.RandomUniform(minval=-1., maxval=1.)
-        self.input_layer = keras.layers.InputLayer(input_shape=(obssize,))
-        self.hidden_layers = [] #10.5
-        for hidden_dim in hidden_dims:
-            layer = keras.layers.Dense(hidden_dim, activation='relu',
-                                      kernel_initializer=initializer)
-            self.hidden_layers.append(layer)
-        self.output_layer = keras.layers.Dense(actsize) 
-    
-    @tf.function
-    def call(self, states):
-        x = self.input_layer(states)
-        for i, layer in enumerate(self.hidden_layers):
-            x = self.hidden_layers[i](x)
-        q_value = self.output_layer(x)
-
-        return q_value
+################################## set device ##################################
+print("============================================================================================")
+# set device to cpu or cuda
+device = torch.device('cpu')
+if(torch.cuda.is_available()): 
+    device = torch.device('cuda:0') 
+    torch.cuda.empty_cache()
+    print("Device set to : " + str(torch.cuda.get_device_name(device)))
+else:
+    print("Device set to : cpu")
+print("============================================================================================")
 
 
-class DQN(object):
-    
-    def __init__(self, obssize, actsize, hidden_dims, optimizer, load_model = None):
-        if load_model is not None :
-            print("trying load "+load_model)
-            self.qfunction = tf.keras.models.load_model(load_model,compile=False)
-        else :
-            self.qfunction = Qfunction(obssize, actsize, hidden_dims)
-        self.optimizer = optimizer
-        self.obssize = obssize
-        self.actsize = actsize
+################################## PPO Policy ##################################
+class RolloutBuffer:
+    def __init__(self, obs_size=10):
+        self.actions = []
+        self.states = []
+        self.logprobs = []
+        self.rewards = []
+        self.is_terminals = []
+        self.obs_size = obs_size
 
-    def save(self,name) :
-        self.qfunction.save(name)
+    def clear(self):
+        del self.actions[:]
+        del self.states[:]
+        del self.logprobs[:]
+        del self.rewards[:]
+        del self.is_terminals[:]
+    def update(self, experience) :
+        reward, done, s, ns = experience        
+        self.rewards.append(reward)
+        self.is_terminals.append(done)
+    def trace_init(self) :
+        pass
 
-    def _predict_q(self, states, actions):
-        q_values = self.compute_Qvalues(states)
-        q_values_about_actions = tf.gather(q_values, actions.reshape(-1, 1), axis=1, batch_dims=1)
-        return q_values_about_actions
-
-    def _loss(self, Qpreds, targets):
-        return tf.math.reduce_mean(tf.square(Qpreds - targets))
-
-    
-    def compute_Qvalues(self, states):
-        inputs = np.atleast_2d(states.astype('float32'))
-        return self.qfunction(inputs)
-
-
-    def train(self, states, actions, targets):
-        with tf.GradientTape() as tape:
-            Qpreds = self._predict_q(states, actions)
-            loss = self._loss(Qpreds, targets)
-        variables = self.qfunction.trainable_variables
-        gradients = tape.gradient(loss, variables)
-        self.optimizer.apply_gradients(zip(gradients, variables))
-        return loss
-
-    def update_weights(self, from_network):
-        from_var = from_network.qfunction.trainable_variables
-        to_var = self.qfunction.trainable_variables
+class ActorCritic(nn.Module):
+    def __init__(self, state_dim, action_dim):
+        super(ActorCritic, self).__init__()
+        self.actor = nn.Sequential(
+                        nn.Linear(state_dim, 64),
+                        nn.Tanh(),
+                        nn.Linear(64, 64),
+                        nn.Tanh(),
+                        nn.Linear(64, action_dim),
+                        nn.Softmax(dim=-1)
+                    )
+        # critic
+        self.critic = nn.Sequential(
+                        nn.Linear(state_dim, 64),
+                        nn.Tanh(),
+                        nn.Linear(64, 64),
+                        nn.Tanh(),
+                        nn.Linear(64, 1)
+                    )
         
-        for v1, v2 in zip(from_var, to_var):
-            v2.assign(v1)
-
-class ReplayBuffer(object):
+    def forward(self):
+        raise NotImplementedError
     
-    def __init__(self, maxlength):
-        self.buffer = deque()
-        self.number = 0
-        self.maxlength = maxlength
-    
-    def append(self, experience):
-        self.buffer.append(experience)
-        self.number += 1
-        if(self.number > self.maxlength):
-            self.pop()
+    def act(self, state):
+        action_probs = self.actor(state)
+        dist = Categorical(action_probs)
+        action = dist.sample()
+        action_logprob = dist.log_prob(action)
         
-    def pop(self):
-        while self.number > self.maxlength:
-            self.buffer.popleft()
-            self.number -= 1
+        return action.detach(), action_logprob.detach()
     
-    def sample(self, batchsize):
-        inds = np.random.choice(len(self.buffer), batchsize, replace=False)
-        return [self.buffer[idx] for idx in inds]
+    def evaluate(self, state, action):
+        # print(state.shape)
+        action_probs = self.actor(state)
+        # print(action_probs)
+        dist = Categorical(action_probs)
+        action_logprobs = dist.log_prob(action)
+        dist_entropy = dist.entropy()
+        state_values = self.critic(state)
         
+        return action_logprobs, state_values, dist_entropy
 
 class agent():
     
@@ -115,74 +93,100 @@ class agent():
         
         self.obssize = 10
         self.actsize = 2
-        self.lr = 5e-4
-        self.maxlength = 10000
-        self.tau = 2
-        self.initialize = 500
-        self.epsilon = 1
-        self.epsilon_decay = .995
-        self.batchsize = 64
         self.gamma = .999
-        self.hidden_dims=[10,5]
-        self.optimizer = keras.optimizers.Adam(learning_rate=self.lr)
+        self.eps_clip = 0.2
+        self.K_epochs = 20
+        self.lr_actor = 0.0003
+        self.lr_critic = 0.001
+        
+        self.MseLoss = nn.MSELoss()
+        self.buffer = RolloutBuffer()
+        self.policy = ActorCritic(self.obssize, self.actsize).to(device)
+        self.policy_old = ActorCritic(self.obssize, self.actsize).to(device)
     
         if load_model is not None :
             self.load_weights()
         else :
-            print("initialize model")
-            self.Qprincipal = DQN(self.obssize, self.actsize, self.hidden_dims, self.optimizer)
-            self.Qtarget = DQN(self.obssize, self.actsize, self.hidden_dims, self.optimizer)
-            self.Qtarget.update_weights(self.Qprincipal)
-            self.buffer = ReplayBuffer(self.maxlength)        
+            print("initialize model")            
+            self.policy_old.load_state_dict(self.policy.state_dict())
+        
+        self.optimizer = torch.optim.Adam([
+                        {'params': self.policy.actor.parameters(), 'lr': self.lr_actor},
+                        {'params': self.policy.critic.parameters(), 'lr': self.lr_critic}
+                    ])
+        
 
     def load_weights(self) :
-        load_model = "./saved_models/chain/"
+        load_model = "./saved_models/chain/"+"model.ckpt"
         print("load model : ", load_model)
-        self.Qprincipal = DQN(self.obssize, self.actsize, self.hidden_dims, self.optimizer, load_model=load_model+"Qprincipal")
-        self.Qtarget = DQN(self.obssize, self.actsize, self.hidden_dims, self.optimizer, load_model=load_model+"Qtarget")
-        self.Qtarget.update_weights(self.Qprincipal)
-        with open(load_model+'Buffer', 'rb') as f :
-            self.buffer = pickle.load(f)
-        with open(load_model+'Infos', 'rb') as f :
-            self.epsilon = pickle.load(f)['epsilon']        
-        
+        self.policy_old.load_state_dict(torch.load(load_model, map_location=lambda storage, loc: storage))
+        self.policy.load_state_dict(torch.load(load_model, map_location=lambda storage, loc: storage))       
 
     def action(self, obs=None, eps_on=True):
         if not obs.any() :
             return random.randrange(0,2)
-        if eps_on :
-            if np.random.rand() < self.epsilon :
-                action = random.randrange(0,2)
-            else :
-                action = np.argmax(self.Qprincipal.compute_Qvalues(obs))
-        return action
+        
+        with torch.no_grad():
+            state = torch.FloatTensor(obs).to(device)
+            action, action_logprob = self.policy_old.act(state)
+        
+        self.buffer.states.append(state)
+        self.buffer.actions.append(action)
+        self.buffer.logprobs.append(action_logprob)
 
-    def train(self,totalstep) :
-        samples = self.buffer.sample(self.batchsize)
-        curr_obs = np.stack([sample[0] for sample in samples])
-        curr_act = np.expand_dims(np.stack([sample[1] for sample in samples]), axis = 1)
-        curr_rew = np.stack([sample[2] for sample in samples])
-        curr_nobs = np.stack([sample[3] for sample in samples])
-        curr_done = np.stack([sample[4] for sample in samples])
-        tmp = self.Qtarget.compute_Qvalues(curr_nobs)
-        tmp = np.max(tmp,axis=1)*(1-curr_done)
-        target_d = np.expand_dims(curr_rew+tmp*self.gamma,axis=1)
-        loss = self.Qprincipal.train(curr_obs,curr_act,target_d)
-        
-        if totalstep % self.tau == 0:
-            self.Qtarget.update_weights(self.Qprincipal)
-        
-        self.epsilon*= self.epsilon_decay
+        return action.item()
+
+    def train(self) :
+        # Monte Carlo estimate of returns
+        rewards = []
+        discounted_reward = 0
+        for reward, is_terminal in zip(reversed(self.buffer.rewards), reversed(self.buffer.is_terminals)):
+            if is_terminal:
+                discounted_reward = 0
+            discounted_reward = reward + (self.gamma * discounted_reward)
+            rewards.insert(0, discounted_reward)
+            
+        # Normalizing the rewards
+        rewards = torch.tensor(rewards, dtype=torch.float32).to(device)
+        rewards = (rewards - rewards.mean()) / (rewards.std() + 1e-7)
+
+        # convert list to tensor
+        old_states = torch.squeeze(torch.stack(self.buffer.states, dim=0)).detach().to(device)
+        old_actions = torch.squeeze(torch.stack(self.buffer.actions, dim=0)).detach().to(device)
+        old_logprobs = torch.squeeze(torch.stack(self.buffer.logprobs, dim=0)).detach().to(device)
+
+        # Optimize policy for K epochs
+        for _ in range(self.K_epochs):
+
+            # Evaluating old actions and values
+            logprobs, state_values, dist_entropy = self.policy.evaluate(old_states, old_actions)
+
+            # match state_values tensor dimensions with rewards tensor
+            state_values = torch.squeeze(state_values)
+            
+            # Finding the ratio (pi_theta / pi_theta__old)
+            ratios = torch.exp(logprobs - old_logprobs.detach())
+
+            # Finding Surrogate Loss
+            advantages = rewards - state_values.detach()   
+            surr1 = ratios * advantages
+            surr2 = torch.clamp(ratios, 1-self.eps_clip, 1+self.eps_clip) * advantages
+
+            # final loss of clipped objective PPO
+            loss = -torch.min(surr1, surr2) + 0.5*self.MseLoss(state_values, rewards) - 0.01*dist_entropy
+            
+            # take gradient step
+            self.optimizer.zero_grad()
+            loss.mean().backward()
+            self.optimizer.step()
+            
+        # Copy new weights into old policy
+        self.policy_old.load_state_dict(self.policy.state_dict())
+
+        # clear buffer
+        self.buffer.clear()
         
     def save(self, name="test") :
-        self.Qprincipal.save(name+"Qprincipal")
-        self.Qtarget.save(name+"Qtarget")
-        
-        infos = {}
-        infos['epsilon'] = self.epsilon
-        
-        with open(name+"Buffer", 'wb') as f :
-            pickle.dump(self.buffer,f)
-
-        with open(name+"Infos",'wb') as f :
-            pickle.dump(infos,f)
+        load_model = "./team9/saved_models/chain/"
+        torch.save(self.policy_old.state_dict(), load_model+"model.ckpt")
+        print("model saved")
