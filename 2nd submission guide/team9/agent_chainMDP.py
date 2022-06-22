@@ -20,9 +20,8 @@ if(torch.cuda.is_available()):
 else:
     print("Device set to : cpu")
 print("============================================================================================")
-
-
 ################################## PPO Policy ##################################
+
 class RolloutBuffer:
     def __init__(self, obs_size=10):
         self.actions = []
@@ -38,10 +37,12 @@ class RolloutBuffer:
         del self.logprobs[:]
         del self.rewards[:]
         del self.is_terminals[:]
+
     def update(self, experience) :
         reward, done, s, ns = experience        
         self.rewards.append(reward)
         self.is_terminals.append(done)
+
     def trace_init(self) :
         pass
 
@@ -96,8 +97,8 @@ class agent():
         self.gamma = .999
         self.eps_clip = 0.2
         self.K_epochs = 20
-        self.lr_actor = 0.0003
-        self.lr_critic = 0.001
+        self.lr_actor = 0.0003 *2
+        self.lr_critic = 0.001 *2
         
         self.MseLoss = nn.MSELoss()
         self.buffer = RolloutBuffer()

@@ -22,17 +22,16 @@ def calculate_performance(episodes, env, agent):
                     
     return np.sum(episodic_returns)
 
-def calculate_sample_efficiency(episodes, env, agent, seed):
+def calculate_sample_efficiency(episodes, env, agent):
 
     episodic_returns = []
+    timestep = 0
     
     for epi in tqdm(range(episodes)):
         
         s = env.reset()
-
         done = False
-        cum_reward = 0.0
-        timestep = 0
+        cum_reward = 0.0        
 
         while not done:  
             timestep += 1
@@ -52,7 +51,7 @@ def calculate_sample_efficiency(episodes, env, agent, seed):
                 agent.train()
         agent.buffer.trace_init()
         episodic_returns.append(cum_reward)
-    agent.save(str(seed))
+
                     
     return np.sum(episodic_returns)
 

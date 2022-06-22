@@ -21,9 +21,8 @@ if(torch.cuda.is_available()):
 else:
     print("Device set to : cpu")
 print("============================================================================================")
-
-
 ################################## PPO Policy ##################################
+
 class RolloutBuffer:
     def __init__(self,obs_size=60):
         self.actions = []
@@ -60,6 +59,9 @@ class RolloutBuffer:
     def trace_check(self,idx) :
         if self.trace[idx] >= 1 :
             return True
+        else:
+            return False
+
     def trace_init(self) :
         self.trace = np.zeros(self.obs_size)
 
@@ -201,7 +203,7 @@ class agent():
             loss.mean().backward()
             self.optimizer.step()
         self.scheduler.step()
-        print("!!!!!!!!!!!!!!!!!!!!!!!!!",self.optimizer.param_groups[0]['lr'])
+        # print("!!!!!!!!!!!!!!!!!!!!!!!!!",self.optimizer.param_groups[0]['lr'])
         # Copy new weights into old policy
         self.policy_old.load_state_dict(self.policy.state_dict())
         # print("Buffer state", len(self.buffer.states))
@@ -211,6 +213,6 @@ class agent():
         
     def save(self, name="test") :
         load_model = os.getcwd()+"/team9/saved_models/lava/"
-        print(name, type(name))
+        # print(name, type(name))
         torch.save(self.policy_old.state_dict(), load_model+"model_{}.ckpt".format(name))
         print("model saved")
