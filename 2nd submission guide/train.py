@@ -30,8 +30,7 @@ elif env_num == 1 :
 
 if __name__ == "__main__" :
 
-    if env_num == 0 :
-                
+    if env_num == 0 :                
         episodes = 1000
         train_step = 20
     elif env_num == 1 :
@@ -44,7 +43,6 @@ if __name__ == "__main__" :
     for epi in tqdm(range(episodes)):
         
         s = env.reset()
-
         done = False
         cum_reward = 0.0 
 
@@ -72,5 +70,6 @@ if __name__ == "__main__" :
 
         #####################
         episodic_returns.append(cum_reward)
-        print(cum_reward)
+        if cum_reward > 0 :
+            print(cum_reward)
     agent.save()

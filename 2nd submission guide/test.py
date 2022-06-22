@@ -14,7 +14,8 @@ def evaluate_performance(team_number, seeds, env_str, env_kwargs):
     pf_list = []
 
     for seed in seeds:
-        print(f'Seed {seed} start...')        
+        print(f'Seed {seed} start...')
+
         random.seed(seed)
         np.random.seed(seed)
         torch.manual_seed(seed)
@@ -38,7 +39,7 @@ def evaluate_sample_efficiency(team_number, seeds, env_str, env_kwargs):
     if env_str == 'chain':
         episodes = 1000
     elif env_str == 'lava':
-        episodes = 3000
+        episodes = 2000
 
     se_list = []
 
@@ -51,8 +52,9 @@ def evaluate_sample_efficiency(team_number, seeds, env_str, env_kwargs):
         env = Env(**env_kwargs)
         agent_instance = Agent()
 
-        se = calculate_se(episodes, env, agent_instance, seed)
+        se = calculate_se(episodes, env, agent_instance)
         se_list.append(se)
+        print(se)
     
     print(f'Avg sample efficiency score : {np.mean(se_list)}')
 

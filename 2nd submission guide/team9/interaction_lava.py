@@ -22,20 +22,19 @@ def calculate_performance(episodes, env, agent):
                     
     return np.sum(episodic_returns)
 
-def calculate_sample_efficiency(episodes, env, agent, seed):
+def calculate_sample_efficiency(episodes, env, agent):
 
     episodic_returns = []
-    
+
+    total_timestep = 0 
     for epi in tqdm(range(episodes)):
         
         s = env.reset()
-
         done = False
         cum_reward = 0.0
-        timestep = 0
 
         while not done:  
-            timestep += 1
+            total_timestep += 1
             action = agent.action(s)
             ns, reward, done, _ = env.step(action)
             cum_reward += reward
@@ -47,12 +46,18 @@ def calculate_sample_efficiency(episodes, env, agent, seed):
             #####################
             # If your agent needs to update the weights at every time step, complete your update process in this area.
             # e.g., agent.update()
-            if (timestep) % 100 ==0:
+            if (total_timestep) % 100 == 0:
                 # print("Train!!!!!!!")
                 agent.train()
         agent.buffer.trace_init()
         episodic_returns.append(cum_reward)
-    agent.save(str(seed))
-                    
+
+        '''
+        
+        if cum_reward > 0 :
+            print(cum_reward)
+        
+        '''
+               
     return np.sum(episodic_returns)
 

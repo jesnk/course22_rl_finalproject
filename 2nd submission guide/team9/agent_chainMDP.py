@@ -114,6 +114,7 @@ class agent():
                         {'params': self.policy.actor.parameters(), 'lr': self.lr_actor},
                         {'params': self.policy.critic.parameters(), 'lr': self.lr_critic}
                     ])
+        self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=10, gamma=0.5)
         
 
     def load_weights(self) :
@@ -179,7 +180,7 @@ class agent():
             self.optimizer.zero_grad()
             loss.mean().backward()
             self.optimizer.step()
-            
+        self.scheduler.step()
         # Copy new weights into old policy
         self.policy_old.load_state_dict(self.policy.state_dict())
 

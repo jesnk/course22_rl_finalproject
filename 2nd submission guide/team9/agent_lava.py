@@ -114,7 +114,7 @@ class agent():
         self.actsize = 4
         self.gamma = .999
         self.eps_clip = 0.2
-        self.K_epochs = 20
+        self.K_epochs = 50 # origin 20 
         self.lr_actor = 0.0003 * 16
         self.lr_critic = 0.001 * 16
         
@@ -133,7 +133,7 @@ class agent():
                         {'params': self.policy.actor.parameters(), 'lr': self.lr_actor},
                         {'params': self.policy.critic.parameters(), 'lr': self.lr_critic}
                     ])
-        self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=50, gamma=0.7)
+        self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=50, gamma=0.9)
         
 
     def load_weights(self) :
@@ -201,7 +201,7 @@ class agent():
             loss.mean().backward()
             self.optimizer.step()
         self.scheduler.step()
-        print("!!!!!!!!!!!!!!!!!!!!!!!!!",self.optimizer.param_groups[0]['lr'])
+        #print("!!!!!!!!!!!!!!!!!!!!!!!!!",self.optimizer.param_groups[0]['lr'])
         # Copy new weights into old policy
         self.policy_old.load_state_dict(self.policy.state_dict())
         # print("Buffer state", len(self.buffer.states))
