@@ -51,18 +51,18 @@ class ActorCritic(nn.Module):
         super(ActorCritic, self).__init__()
         self.actor = nn.Sequential(
                         nn.Linear(state_dim, 64),
-                        nn.Tanh(),
-                        nn.Linear(64, 64),
-                        nn.Tanh(),
+                        nn.ReLU(), #Tanh(),
+                        #nn.Linear(64, 64),
+                        #nn.ReLU(),
                         nn.Linear(64, action_dim),
                         nn.Softmax(dim=-1)
                     )
         # critic
         self.critic = nn.Sequential(
                         nn.Linear(state_dim, 64),
-                        nn.Tanh(),
-                        nn.Linear(64, 64),
-                        nn.Tanh(),
+                        nn.ReLU(),
+                        #nn.Linear(64, 64),
+                        #nn.ReLU(),
                         nn.Linear(64, 1)
                     )
         
@@ -97,8 +97,8 @@ class agent():
         self.gamma = .999
         self.eps_clip = 0.2
         self.K_epochs = 20
-        self.lr_actor = 0.0003 *2
-        self.lr_critic = 0.001 *2
+        self.lr_actor = 0.0003 *0.1
+        self.lr_critic = 0.001 *0.1
         
         self.MseLoss = nn.MSELoss()
         self.buffer = RolloutBuffer()

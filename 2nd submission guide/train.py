@@ -33,7 +33,7 @@ if __name__ == "__main__" :
     if env_num == 0 :                
 
         episodes = 1000
-        train_step = 20
+        train_step = 18*3
 
     elif env_num == 1 :
         episodes = 2000
@@ -50,24 +50,24 @@ if __name__ == "__main__" :
 
         while not done:  
             timestep += 1
-            print("State", s)
-            action = random.randrange(0,2)
-            # action = agent.action(s)
-            print("Action", action)
+            # print("State", s)
+            #action = random.randrange(0,2)
+            action = agent.action(s)
+            # print("Action", action)
             ns, reward, done, _ = env.step(action)
             cum_reward += reward
             # saving reward and is_terminals
-            #if s.any():
-            #    experience = [reward, done, s, ns]
-            #    agent.buffer.update(experience)
+            if s.any():
+                experience = [reward, done, s, ns]
+                agent.buffer.update(experience)
             s = ns
             #####################
             # If your agent needs to update the weights at every time step, complete your update process in this area.
             # e.g., agent.update()
-            #if (timestep) % train_step ==0:
+            if (timestep) % train_step ==0:
                 # print("Train!!!!!!!")
-            #    agent.train()
-        #agent.buffer.trace_init()
+                agent.train()
+        agent.buffer.trace_init()
         #####################
         # elif your agent needs to update the weights at the end of every episode, complete your update process in this area.
         # e.g., agent.update()

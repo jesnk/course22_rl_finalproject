@@ -117,8 +117,8 @@ class agent():
         self.gamma = .999
         self.eps_clip = 0.2
         self.K_epochs = 50 # origin 20 
-        self.lr_actor = 0.0003 * 16
-        self.lr_critic = 0.001 * 16
+        self.lr_actor = 0.0003 * 4
+        self.lr_critic = 0.001 * 4
         
         self.MseLoss = nn.MSELoss()
         self.buffer = RolloutBuffer()
