@@ -135,7 +135,7 @@ class agent():
                         {'params': self.policy.actor.parameters(), 'lr': self.lr_actor},
                         {'params': self.policy.critic.parameters(), 'lr': self.lr_critic}
                     ])
-        self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=50, gamma=0.9)
+        self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=50, gamma=1)
         
 
     def load_weights(self) :
