@@ -39,7 +39,7 @@ def evaluate_sample_efficiency(team_number, seeds, env_str, env_kwargs):
     if env_str == 'chain':
         episodes = 1000
     elif env_str == 'lava':
-        episodes = 2000
+        episodes = 3000
 
     se_list = []
 

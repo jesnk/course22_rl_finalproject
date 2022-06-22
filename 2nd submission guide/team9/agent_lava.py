@@ -114,9 +114,9 @@ class agent():
         self.actsize = 4
         self.gamma = .999
         self.eps_clip = 0.2
-        self.K_epochs = 50 # origin 20 
-        self.lr_actor = 0.0003 * 16
-        self.lr_critic = 0.001 * 16
+        self.K_epochs = 40 # origin 20 
+        self.lr_actor = 0.0003 * 1
+        self.lr_critic = 0.001 * 1
         
         self.MseLoss = nn.MSELoss()
         self.buffer = RolloutBuffer()
@@ -133,7 +133,7 @@ class agent():
                         {'params': self.policy.actor.parameters(), 'lr': self.lr_actor},
                         {'params': self.policy.critic.parameters(), 'lr': self.lr_critic}
                     ])
-        self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=50, gamma=0.9)
+        self.scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=50, gamma=1)
         
 
     def load_weights(self) :
